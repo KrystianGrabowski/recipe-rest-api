@@ -61,3 +61,23 @@ class PrivateTagsApiTests(TestCase):
             [response.data[0]['name'], response.data[1]['name']],
             ['Vegan', 'Ketogenic']
         )
+
+    def test_create_tag(self):
+        payload = {'name': 'newTag'}
+        self.client.post(TAGS_URL, payload)
+
+        tag_exists = Tag.objects\
+            .filter(user=self.user, name=payload['name']).exists()
+
+        self.assertTrue(tag_exists)
+
+    def test_create_tag_invalid(self):
+        payload = {'name': ''}
+        response = self.client.post(TAGS_URL, payload)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        tag_exists = Tag.objects\
+            .filter(user=self.user, name=payload['name']).exists()
+
+        self.assertFalse(tag_exists)
