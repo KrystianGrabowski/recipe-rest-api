@@ -242,3 +242,46 @@ class RecipeImageUploadTest(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_filter_recipes_by_tags(self):
+        recipe_1 = sample_recipe(user=self.user, title='Spaghetti')
+        recipe_2 = sample_recipe(user=self.user, title='Pesto pasta')
+        tag_1 = sample_tag(user=self.user, name='Beef')
+        tag_2 = sample_tag(user=self.user, name='Pesto')
+        recipe_1.tags.add(tag_1)
+        recipe_2.tags.add(tag_2)
+        sample_recipe(user=self.user, title='Fish and chips')
+
+        response = self.client.get(
+            RECIPES_URL,
+            {'tags': f'{tag_1.id},{tag_2.id}'}
+        )
+
+        recipes = Recipe.objects.filter(tags__in=[tag_1, tag_2])\
+            .order_by('title')
+        serializer = RecipeSerializer(recipes, many=True)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(serializer.data, response.data)
+
+    def test_filter_recipes_by_ingredients(self):
+        recipe_1 = sample_recipe(user=self.user, title='Spaghetti')
+        recipe_2 = sample_recipe(user=self.user, title='Pesto pasta')
+        ingredient_1 = sample_ingredient(user=self.user, name='Pasta')
+        ingredient_2 = sample_ingredient(user=self.user, name='Yogurt')
+        recipe_1.ingredients.add(ingredient_1)
+        recipe_2.ingredients.add(ingredient_2)
+        sample_recipe(user=self.user, title='Fish and chips')
+
+        response = self.client.get(
+            RECIPES_URL,
+            {'ingredients': f'{ingredient_1.id},{ingredient_2.id}'}
+        )
+
+        recipes = Recipe.objects\
+            .filter(ingredients__in=[ingredient_2, ingredient_1])\
+            .order_by('title')
+        serializer = RecipeSerializer(recipes, many=True)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(serializer.data, response.data)
